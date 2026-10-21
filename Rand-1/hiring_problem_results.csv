@@ -1,4 +1,4 @@
-n,trials,observed_average_hires,theoretical_average_hires,best_case_hires,worst_case_hires
+n,simulaties,geobserveerd aantal aanwervingen,theoretisch aantal aanwervingen,best_case,worst_case
 10,3000,2.937666666666667,2.9289682539682538,1,10
 30,3000,3.9553333333333334,3.994987130920391,1,30
 100,3000,5.167666666666666,5.187377517639621,1,100

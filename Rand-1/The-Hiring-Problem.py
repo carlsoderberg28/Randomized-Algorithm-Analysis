@@ -58,11 +58,11 @@ def run_experiments():
         results.append(
             {
                 "n": n,
-                "trials": trials,
-                "observed_average_hires": observed_average,
-                "theoretical_average_hires": theoretical_average,
-                "best_case_hires": best_hires,
-                "worst_case_hires": worst_hires,
+                "simulaties": trials,
+                "geobserveerd aantal aanwervingen": observed_average,
+                "theoretisch aantal aanwervingen": theoretical_average,
+                "best_case": best_hires,
+                "worst_case": worst_hires,
             }
         )
 
@@ -81,18 +81,18 @@ def run_experiments():
         writer.writerows(results)
 
     candidate_counts = [row["n"] for row in results]
-    observed_average_hires = [row["observed_average_hires"] for row in results]
-    theoretical_average_hires = [row["theoretical_average_hires"] for row in results]
+    observed_average_hires = [row["geobserveerd aantal aanwervingen"] for row in results]
+    theoretical_average_hires = [row["theoretisch aantal aanwervingen"] for row in results]
 
     fig, ax = plt.subplots(figsize=(8, 5))
-    ax.plot(candidate_counts, observed_average_hires, "o-", label="Observed average")
+    ax.plot(candidate_counts, observed_average_hires, "o-", label="Geobserveerd gemiddelde")
     ax.plot(
-        candidate_counts, theoretical_average_hires, "--", label=r"Theoretical average"
+        candidate_counts, theoretical_average_hires, "--", label=r"Theoretisch gemiddelde"
     )
     ax.set_xscale("log")
-    ax.set_xlabel("Number of candidates, n (log scale)")
-    ax.set_ylabel("Hiring cost (number of hires)")
-    ax.set_title("Hiring cost under randomized candidate order")
+    ax.set_xlabel("Aantal kandidaten, n (log schaal)")
+    ax.set_ylabel("Aantal aanwervingen")
+    ax.set_title("Het Hiring Problem: Geobserveerd vs. Theoretisch gemiddelde")
     ax.grid(True, which="both", alpha=0.3)
     ax.legend()
     fig.tight_layout()
