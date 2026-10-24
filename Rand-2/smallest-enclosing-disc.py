@@ -151,12 +151,11 @@ def Mini_disc_with_2_points(Points, q1, q2, rng=None):
 
 
 def main():
-    
+
     sizes = [50, 100, 250, 500, 1000, 2000, 4000]
 
     repetitions = 10
 
-    
     rng_points = random.Random(12345)
     rng_order = random.Random(54321)
 
@@ -166,18 +165,16 @@ def main():
         execution_times = []
 
         for _ in range(repetitions):
-            
+
             points = [
                 Points(rng_points.uniform(0, 1000), rng_points.uniform(0, 1000))
                 for _ in range(n)
             ]
 
-            
             start = time.perf_counter()
             disc = mini_disc(points, rng=rng_order)
             elapsed = time.perf_counter() - start
 
-           
             if not all(in_circle(p, disc.circle()) for p in points):
                 raise RuntimeError(f"The disc does not enclose all points for n={n}.")
 
@@ -192,7 +189,7 @@ def main():
                 "n": n,
                 "best_case_complexiteit": "O(n)",
                 "worst_case_complexiteit": "O(n^3)",
-                "theoritische_gemiddelde_tijd_complexiteit": "Expected O(n)",
+                "theoritische_gemiddelde_tijd_complexiteit": "Verwacht O(n)",
                 "geobserveerde_best_case_tijd_seconden": best_time,
                 "geobserveerde_worst_case_tijd_seconden": worst_time,
                 "geobserveerde_gemiddelde_tijd_seconden": average_time,
@@ -201,23 +198,26 @@ def main():
 
         print(
             f"n={n:5d} | "
-            f"best={best_time:.6f}s | "
-            f"average={average_time:.6f}s | "
-            f"worst={worst_time:.6f}s"
+            f"beste={best_time:.6f}s | "
+            f"gemiddelde={average_time:.6f}s | "
+            f"slechtste={worst_time:.6f}s"
         )
 
+    n0 = results[0]["n"]
+    average_time0 = results[0]["geobserveerde_gemiddelde_tijd_seconden"]
+    worst_time0 = results[0]["geobserveerde_worst_case_tijd_seconden"]
 
-    observed_averages = [row["geobserveerde_gemiddelde_tijd_seconden"] for row in results]
-
-    # Fit T(n) = c*n through the origin.
-    # Big-O specifies growth, not the constant c.
-    numerator = sum(row["n"] * row["geobserveerde_gemiddelde_tijd_seconden"] for row in results)
-    denominator = sum(row["n"] ** 2 for row in results)
-
-    c = numerator / denominator
-
-    theoretical_reference = [c * row["n"] for row in results]
-
+    for row in results:
+        size_ratio = row["n"] / n0
+        row["relatieve_invoergrootte_n_over_n0"] = size_ratio
+        row["geobserveerde_gemiddelde_groeiverhouding"] = (
+            row["geobserveerde_gemiddelde_tijd_seconden"] / average_time0
+        )
+        row["geobserveerde_slechtste_groeiverhouding"] = (
+            row["geobserveerde_worst_case_tijd_seconden"] / worst_time0
+        )
+        row["lineaire_groeireferentie"] = size_ratio
+        row["kubische_groeireferentie"] = size_ratio**3
 
     csv_filename = "smallest_enclosing_disc_results.csv"
 
@@ -228,44 +228,62 @@ def main():
         "theoritische_gemiddelde_tijd_complexiteit",
         "geobserveerde_best_case_tijd_seconden",
         "geobserveerde_worst_case_tijd_seconden",
-        "theoretische_lineaire_referentie_seconden",
         "geobserveerde_gemiddelde_tijd_seconden",
+        "relatieve_invoergrootte_n_over_n0",
+        "geobserveerde_gemiddelde_groeiverhouding",
+        "geobserveerde_slechtste_groeiverhouding",
+        "lineaire_groeireferentie",
+        "kubische_groeireferentie",
     ]
 
     with open(csv_filename, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
 
-        for row, theoretical_time in zip(results, theoretical_reference):
-            output_row = row.copy()
-            output_row["theoretische_lineaire_referentie_seconden"] = theoretical_time
-
-            writer.writerow(output_row)
+        writer.writerows(results)
 
     plt.figure(figsize=(9, 6))
 
-    plt.plot(sizes, observed_averages, marker="o", label="geobserveerde gemiddelde tijd (seconden)")
+    relative_sizes = [row["relatieve_invoergrootte_n_over_n0"] for row in results]
 
-    plt.plot(
-        sizes,
-        theoretical_reference,
+    plt.loglog(
+        relative_sizes,
+        [row["geobserveerde_gemiddelde_groeiverhouding"] for row in results],
+        marker="o",
+        label="Geobserveerde gemiddelde groei",
+    )
+    plt.loglog(
+        relative_sizes,
+        [row["geobserveerde_slechtste_groeiverhouding"] for row in results],
+        marker="s",
+        label="Slechtste gemeten groei (10 herhalingen)",
+    )
+    plt.loglog(
+        relative_sizes,
+        [row["lineaire_groeireferentie"] for row in results],
         linestyle="--",
-        label="Theoretische lineaire referentie (c*n) (seconden)",
+        label="Lineaire groeireferentie O(n)",
+    )
+    plt.loglog(
+        relative_sizes,
+        [row["kubische_groeireferentie"] for row in results],
+        linestyle=":",
+        label="Kubische groeireferentie O(n³)",
     )
 
-    plt.xlabel("Aantal punten (n)")
-    plt.ylabel("Tijd (seconden)")
-    plt.title("Kleinste insluitende schijf: Geobserveerde gemiddelde tijd vs. Theoretische lineaire referentie")
+    plt.xlabel("Relatieve invoergrootte (n / n₀)")
+    plt.ylabel("Relatieve groeitijd (T(n) / T(n₀))")
+    plt.title("Genormaliseerde groei van de kleinste insluitende schijf")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
 
-    png_filename = "smallest_enclosing_disc_runtime.png"
+    png_filename = "smallest_enclosing_disc_growth.png"
     plt.savefig(png_filename, dpi=300, bbox_inches="tight")
     plt.show()
 
-    print(f"\nGraph saved to: {png_filename}")
-    print(f"Results saved to: {csv_filename}")
+    print(f"\nGrafiek opgeslagen als: {png_filename}")
+    print(f"Resultaten opgeslagen als: {csv_filename}")
 
 
 if __name__ == "__main__":
